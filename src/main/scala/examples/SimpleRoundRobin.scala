@@ -4,11 +4,12 @@ import weightedroundrobin.RoundRobinUtils.{divByFivePenalizer, plusOneRewarder}
 import weightedroundrobin.{RoundRobin, WeightedResource}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.language.higherKinds
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object RoundrobinExample {
+object SimpleRoundRobin {
 
   private val resourcePool = mutable.ListBuffer(WeightedResource("nr1", "nr1", 100, 75), WeightedResource("nr2", "nr2", 40, 39), WeightedResource("nr3", "nr3", 50, 0))
   private val rr = new RoundRobin[WeightedResource, Seq] {}
@@ -31,5 +32,10 @@ object RoundrobinExample {
       })
     }
     global
+  }
+
+  def addResource(weightedResource: WeightedResource) : ListBuffer[WeightedResource] = {
+    resourcePool.append(weightedResource)
+    resourcePool
   }
 }

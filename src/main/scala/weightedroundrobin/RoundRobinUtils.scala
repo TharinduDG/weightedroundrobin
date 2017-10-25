@@ -2,7 +2,6 @@ package weightedroundrobin
 
 import scala.collection.mutable
 import scala.language.higherKinds
-
 /**
   * Created by tgalappathth on 9/29/17.
   */

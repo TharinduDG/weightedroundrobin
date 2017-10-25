@@ -59,7 +59,7 @@ class RoundRobinPropertyTestWithRandomGens extends PropSpec with PropertyChecks 
   property("`forResourceUnsafe` all in one test") {
 
     val roundRobinTrigger: ((WeightedResource) => Any, Seq[WeightedResource]) => ((Seq[WeightedResource]) => Seq[WeightedResource]) => (Seq[WeightedResource], Either[Throwable, Any]) =
-      rr.forResourceUnsafe(_)(plusOneRewarder, divByFivePenalizer, _)
+      rr.forResource(_)(plusOneRewarder, divByFivePenalizer, _)
 
     forAll { (resourcePool: mutable.ListBuffer[WeightedResource], fn: (Resource) => Int) =>
 
@@ -93,7 +93,7 @@ class RoundRobinPropertyTestWithRandomGens extends PropSpec with PropertyChecks 
   property("`forResourceAsyncUnsafe` all in one test") {
 
     val roundRobinAsyncTrigger: ((WeightedResource) => Future[Any], Seq[WeightedResource]) => ((Seq[WeightedResource]) => Seq[WeightedResource]) => (Future[Seq[WeightedResource]], Future[Either[Throwable, Any]])
-    = rr.forResourceAsyncUnsafe(_)(plusOneRewarder, divByFivePenalizer, _)
+    = rr.forResourceAsync(_)(plusOneRewarder, divByFivePenalizer, _)
 
     forAll { (resourcePool: mutable.ListBuffer[WeightedResource], fn: (Resource) => Future[Int]) =>
 

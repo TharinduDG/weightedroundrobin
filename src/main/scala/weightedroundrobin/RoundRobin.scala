@@ -26,9 +26,9 @@ trait RoundRobin[R <: Resource, F[B] <: Seq[B]] {
     * @tparam S Return type of the resource consumer function `fn`
     * @return a `Tuple2` of updated `resourcePool` with an `Either` of result or the occurred exception
     */
-  def forResourceUnsafe[S](fn: (R) => S)
-                          (rewarder: Int => Int, penalizer: Int => Int, resourcePool: F[R])(syncGlobalWithUpdated: F[R] => F[R])
-                          (implicit tag: TypeTag[R]): (F[R], Either[Throwable, S]) = {
+  def forResource[S](fn: (R) => S)
+                    (rewarder: Int => Int, penalizer: Int => Int, resourcePool: F[R])(syncGlobalWithUpdated: F[R] => F[R])
+                    (implicit tag: TypeTag[R]): (F[R], Either[Throwable, S]) = {
 
     val state: State[F[R], Either[Throwable, S]] = resourceConsumer(fn)(rewarder, penalizer).modify(s => {
       syncGlobalWithUpdated(s)
@@ -39,61 +39,8 @@ trait RoundRobin[R <: Resource, F[B] <: Seq[B]] {
 
   /** Executes the given resource consumer function `fn` and returns the result of `fn` or the exception
     * along with the updated resource pool. Causes side effects using `syncWithOriginal`.
-    * `resourcePool` consumption is thread safe.
-    *
-    * @param fn                    Resource Consumer Function
-    * @param rewarder              Function to reward the resource when it is successfully consumed
-    * @param penalizer             Function to penalize the resource when it's consumption failed
-    * @param resourcePool          Global Resources pool to be consumed
-    * @param syncGlobalWithUpdated Function to execute after the resource has been consumed by the `fn`
-    * @param tag                   Implicit Type tag to identify Resource
-    * @tparam S Return type of the resource consumer function `fn`
-    * @return a `Tuple2` of updated `resourcePool` with an `Either` of result or the occurred exception
-    */
-  def forResource[S](fn: (R) => S)
-                    (rewarder: Int => Int, penalizer: Int => Int, resourcePool: F[R])(syncGlobalWithUpdated: F[R] => F[R])
-                    (implicit tag: TypeTag[R]): (F[R], Either[Throwable, S]) = {
-
-    val state = resourceConsumer(fn)(rewarder, penalizer).modify(l => {
-      syncGlobalWithUpdated(l)
-    })
-
-    val result = synchronized {
-      state.run(resourcePool).value
-    }
-    result
-  }
-
-  /** Executes the given resource consumer function `fn` and returns the result of `fn` or the exception
-    * along with the updated resource pool. Causes side effects using `syncWithOriginal`.
     * There's a risk of thread safety of when consuming the resource pool.
     * Could result in lost updates for resources.
-    *
-    * @param fn                    Resource Consumer Function that returns a `Future`
-    * @param rewarder              Function to reward the resource when it is successfully consumed
-    * @param penalizer             Function to penalize the resource when it's consumption failed
-    * @param resourcePool          Global Resources pool to be consumed
-    * @param syncGlobalWithUpdated Function to execute after the resource has been consumed by the `fn`
-    * @param tag                   Implicit Type tag to identify Resource
-    * @tparam S type of the `Future` that the resource consumer function `fn` will return
-    * @return a `Tuple2` of updated `resourcePool` with an `Either` of result or the occurred exception
-    */
-  def forResourceAsyncUnsafe[S](fn: (R) => Future[S])
-                               (rewarder: Int => Int, penalizer: Int => Int, resourcePool: F[R])(syncGlobalWithUpdated: F[R] => F[R])
-                               (implicit executionContext: ExecutionContext, tag: TypeTag[R]): (Future[F[R]], Future[Either[Throwable, S]]) = {
-
-    val state = resourceConsumerAsync(fn)(rewarder, penalizer).modify(f => {
-      f.map(t => {
-        syncGlobalWithUpdated(t)
-      })
-    })
-
-    state.run(Future.successful[F[R]](resourcePool)).value
-  }
-
-  /** Executes the given resource consumer function `fn` and returns the result of `fn` or the exception
-    * along with the updated resource pool. Causes side effects using `syncWithOriginal`.
-    * `resoucePool` consumption is thread safe.
     *
     * @param fn                    Resource Consumer Function that returns a `Future`
     * @param rewarder              Function to reward the resource when it is successfully consumed
@@ -114,11 +61,7 @@ trait RoundRobin[R <: Resource, F[B] <: Seq[B]] {
       })
     })
 
-    val result = synchronized {
-      state.run(Future.successful[F[R]](resourcePool)).value
-    }
-
-    result
+    state.run(Future.successful[F[R]](resourcePool)).value
   }
 
   /** Pure Function which Produces a `State` monad to consume any `Resource` pool using the given function `fn`

@@ -16,12 +16,12 @@ class SimpleRoundRobin[R <: Resource, F[B] <: mutable.Buffer[B]](val resourcePoo
   private val rr = new RoundRobin[R, mutable.Buffer] {}
 
   def forResource[S](fn: (R) => S)(implicit tag: TypeTag[R]): Either[Throwable, S] = {
-    val (_, result) = rr.forResourceUnsafe(fn)(plusOneRewarder, divByFivePenalizer, resourcePool)(syncGlobalWithUpdatedResourcePool(resourcePool))
+    val (_, result) = rr.forResource(fn)(plusOneRewarder, divByFivePenalizer, resourcePool)(syncGlobalWithUpdatedResourcePool(resourcePool))
     result
   }
 
   def forResourceAsync[S](fn: (R) => Future[S])(implicit tag: TypeTag[R]): Future[Either[Throwable, S]] = {
-    val (_, result) = rr.forResourceAsyncUnsafe(fn)(plusOneRewarder, divByFivePenalizer, resourcePool)(syncGlobalWithUpdatedResourcePool(resourcePool))
+    val (_, result) = rr.forResourceAsync(fn)(plusOneRewarder, divByFivePenalizer, resourcePool)(syncGlobalWithUpdatedResourcePool(resourcePool))
     result
   }
 }
